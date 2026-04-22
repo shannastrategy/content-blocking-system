@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Block Builder</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #f7f7f5;
+      color: #1a1a1a;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ── */
+    .header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(255,255,255,0.94);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid #e5e7eb;
+      height: 56px;
+      padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .header-brand h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+    .header-tagline  { font-size: 13px; color: #9ca3af; margin-left: 10px; }
+    @media (max-width: 520px) { .header-tagline { display: none; } }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+
+    .save-indicator { font-size: 12px; color: #9ca3af; white-space: nowrap; transition: color 0.3s; }
+    .save-indicator.saved { color: #10b981; }
+
+    /* ── Buttons ── */
+    button { font-family: inherit; cursor: pointer; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 8px;
+      font-size: 13px; font-weight: 500;
+      border: 1px solid transparent;
+      transition: background 0.12s, border-color 0.12s;
+      white-space: nowrap;
+    }
+    .btn-primary  { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+    .btn-primary:hover  { background: #2d2d2d; border-color: #2d2d2d; }
+    .btn-secondary { background: #fff; color: #374151; border-color: #d1d5db; }
+    .btn-secondary:hover { background: #f9fafb; border-color: #9ca3af; }
+
+    .btn-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 6px;
+      border: none; background: transparent; color: #9ca3af;
+      transition: background 0.12s, color 0.12s;
+    }
+    .btn-icon:hover:not(:disabled) { background: #f3f4f6; color: #374151; }
+    .btn-icon.danger:hover:not(:disabled) { background: #fef2f2; color: #ef4444; }
+    .btn-icon:disabled { opacity: 0.28; cursor: default; }
+
+    /* ── Layout ── */
+    .main { max-width: 760px; margin: 0 auto; padding: 36px 24px 100px; }
+
+    .page-title-input {
+      width: 100%; font-size: 26px; font-weight: 700;
+      letter-spacing: -0.02em; color: #1a1a1a;
+      border: none; background: transparent; outline: none;
+      caret-color: #1a1a1a; margin-bottom: 28px; display: block;
+    }
+    .page-title-input::placeholder { color: #d1d5db; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center; padding: 72px 24px; color: #6b7280;
+    }
+    .empty-icon { font-size: 36px; margin-bottom: 14px; }
+    .empty-state h2 { font-size: 17px; font-weight: 600; color: #374151; margin-bottom: 8px; }
+    .empty-state p  { font-size: 14px; line-height: 1.6; max-width: 300px; margin: 0 auto 22px; }
+
+    /* ── Block card ── */
+    .block-card {
+      border: 1px solid #e5e7eb; border-radius: 12px;
+      overflow: hidden; margin-bottom: 12px;
+      transition: box-shadow 0.15s;
+    }
+    .block-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+
+    .block-card-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      background: rgba(255,255,255,0.7);
+    }
+    .block-num {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: #1a1a1a; color: #fff;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .block-name-field {
+      flex: 1; font-size: 14px; font-weight: 600;
+      border: none; background: transparent; outline: none; color: #1a1a1a; min-width: 0;
+    }
+    .block-name-field::placeholder { color: #c4c9d4; font-weight: 400; }
+
+    /* Color swatch — colored circle that opens native picker */
+    .color-swatch {
+      position: relative; width: 22px; height: 22px; border-radius: 50%;
+      cursor: pointer; flex-shrink: 0;
+      box-shadow: 0 0 0 1.5px rgba(0,0,0,0.14), inset 0 0 0 2px rgba(255,255,255,0.35);
+      transition: box-shadow 0.15s;
+    }
+    .color-swatch:hover { box-shadow: 0 0 0 2px rgba(0,0,0,0.2), inset 0 0 0 2px rgba(255,255,255,0.35); }
+    .color-swatch input[type="color"] {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0; cursor: pointer; border: none; padding: 0;
+    }
+
+    /* Short label field */
+    .block-tag-field {
+      width: 76px; font-size: 11.5px; font-weight: 600; font-family: inherit;
+      border: 1px solid transparent; background: transparent;
+      border-radius: 6px; padding: 3px 7px; outline: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .block-tag-field::placeholder { color: #d1d5db; font-weight: 400; }
+    .block-tag-field:focus { border-color: currentColor; background: rgba(0,0,0,0.03); }
+
+    .block-card-actions { display: flex; gap: 2px; flex-shrink: 0; }
+
+    /* ── Block body ── */
+    .block-card-body {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 540px) { .block-card-body { grid-template-columns: 1fr; } }
+    .field-full { grid-column: 1 / -1; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    .field-label {
+      font-size: 10.5px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em; color: #9ca3af;
+    }
+
+    .field-textarea {
+      width: 100%; min-height: 80px;
+      border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 9px 11px; font-size: 13.5px;
+      font-family: inherit; color: #1a1a1a;
+      line-height: 1.55; resize: none; outline: none;
+      transition: border-color 0.15s; overflow: hidden;
+    }
+    .field-textarea:focus { border-color: #6b7280; }
+    .field-textarea::placeholder { color: #c4c9d4; }
+
+    /* ── Elements list ── */
+    .elements-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .element-row { display: flex; align-items: center; gap: 8px; }
+
+    .element-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #d1d5db; flex-shrink: 0;
+    }
+
+    .element-input {
+      flex: 1; border: 1px solid #e5e7eb; border-radius: 7px;
+      padding: 7px 10px; font-size: 13.5px;
+      font-family: inherit; color: #1a1a1a;
+      outline: none; transition: border-color 0.15s; min-width: 0;
+    }
+    .element-input:focus { border-color: #6b7280; }
+    .element-input::placeholder { color: #c4c9d4; }
+
+    .btn-remove-elem {
+      width: 22px; height: 22px; border-radius: 5px;
+      border: none; background: transparent; color: #d1d5db;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: background 0.12s, color 0.12s;
+    }
+    .btn-remove-elem:hover { background: #fef2f2; color: #ef4444; }
+
+    .btn-add-elem {
+      display: inline-flex; align-items: center; gap: 5px;
+      margin-top: 6px; padding: 5px 9px;
+      border: 1px dashed #d1d5db; border-radius: 6px;
+      background: transparent; color: #9ca3af;
+      font-size: 12.5px; font-family: inherit;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .btn-add-elem:hover { border-color: #6b7280; color: #374151; background: #f9fafb; }
+
+    /* ── Add block button ── */
+    .btn-add-block {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 14px; margin-top: 4px;
+      border: 1.5px dashed #d1d5db; border-radius: 10px;
+      background: transparent; color: #9ca3af;
+      font-size: 13.5px; font-weight: 500; font-family: inherit;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .btn-add-block:hover { border-color: #6b7280; color: #374151; background: #fff; }
+
+    /* ── Modals ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35); z-index: 200;
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: #fff; border-radius: 14px; padding: 24px;
+      width: 100%; max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .modal-title    { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .modal-subtitle { font-size: 13px; color: #6b7280; margin-bottom: 20px; }
+    .modal-footer   { display: flex; justify-content: flex-end; margin-top: 16px; }
+    .modal-actions  { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+    /* Export options */
+    .export-options { display: flex; flex-direction: column; gap: 8px; }
+
+    .export-opt {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px; border: 1px solid #e5e7eb; border-radius: 10px;
+      background: #fff; font-family: inherit; text-align: left; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s; width: 100%;
+    }
+    .export-opt:hover { border-color: #1a1a1a; background: #fafafa; }
+
+    .export-opt-icon {
+      width: 38px; height: 38px; border-radius: 9px;
+      background: #f3f4f6;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .export-opt-title { font-size: 13.5px; font-weight: 600; color: #1a1a1a; }
+    .export-opt-desc  { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+
+    /* Email form */
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      display: block; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: #9ca3af; margin-bottom: 5px;
+    }
+    .form-input {
+      width: 100%; border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 9px 12px; font-size: 13.5px;
+      font-family: inherit; color: #1a1a1a; outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus { border-color: #6b7280; }
+
+    /* ── Print ── */
+    @media print {
+      .header,
+      .block-card-actions,
+      .btn-add-block,
+      .btn-add-elem,
+      .btn-remove-elem { display: none !important; }
+
+      body { background: #fff; }
+
+      .main { max-width: 100%; padding: 0; }
+
+      .page-title-input { font-size: 20pt; margin-bottom: 18pt; }
+
+      .block-card {
+        page-break-inside: avoid; break-inside: avoid;
+        border: 1px solid #ccc; margin-bottom: 14pt;
+        box-shadow: none !important;
+      }
+
+      .block-card-body { grid-template-columns: 1fr 1fr; }
+
+      .color-swatch { display: none !important; }
+
+      .block-tag-field {
+        border: none !important; background: transparent !important;
+        padding: 0 !important; font-size: 10pt;
+      }
+
+      .field-textarea, .element-input, .block-name-field {
+        border: none !important; padding: 0 !important;
+        background: transparent !important;
+        resize: none !important; min-height: unset !important;
+        height: auto !important; overflow: visible !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-brand">
+    <h1>Block Builder<span class="header-tagline">Plan your page before design begins</span></h1>
+  </div>
+  <div class="header-right">
+    <span class="save-indicator" id="saveStatus">Auto-saved</span>
+    <button class="btn btn-secondary" onclick="openModal('exportModal')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export
+    </button>
+    <button class="btn btn-primary" onclick="addBlock()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add block
+    </button>
+  </div>
+</header>
+
+<main class="main">
+  <input
+    class="page-title-input"
+    id="pageTitle"
+    type="text"
+    placeholder="Page name…"
+    oninput="state.title = this.value; scheduleSave()"
+  />
+  <div id="blocksList"></div>
+  <button class="btn-add-block" id="addBlockBtn" onclick="addBlock()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add block
+  </button>
+</main>
+
+<!-- Export modal -->
+<div class="overlay" id="exportModal" onclick="handleOverlay(event,'exportModal')">
+  <div class="modal">
+    <div class="modal-title">Export</div>
+    <div class="modal-subtitle">Share your page plan with the team.</div>
+    <div class="export-options">
+      <button class="export-opt" onclick="exportPDF()">
+        <div class="export-opt-icon">📄</div>
+        <div>
+          <div class="export-opt-title">Download as PDF</div>
+          <div class="export-opt-desc">Opens browser print dialog — save as PDF</div>
+        </div>
+      </button>
+      <button class="export-opt" onclick="openEmailModal()">
+        <div class="export-opt-icon">✉️</div>
+        <div>
+          <div class="export-opt-title">Send via email</div>
+          <div class="export-opt-desc">Opens your email client with the plan included</div>
+        </div>
+      </button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('exportModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Email modal -->
+<div class="overlay" id="emailModal" onclick="handleOverlay(event,'emailModal')">
+  <div class="modal">
+    <div class="modal-title">Send via email</div>
+    <div class="modal-subtitle">Opens your default email client with your plan as the body.</div>
+    <div class="form-group">
+      <label class="form-label" for="emailTo">To</label>
+      <input class="form-input" type="email" id="emailTo" placeholder="colleague@company.com" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="emailSubject">Subject</label>
+      <input class="form-input" type="text" id="emailSubject" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('emailModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="sendEmail()">Open email client</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+let state = { title: '', blocks: [] };
+let saveTimer = null;
+let idSeed = Date.now();
+const uid = () => (idSeed++).toString(36) + Math.random().toString(36).slice(2,5);
+
+// ── Color helpers ─────────────────────────────────────
+const COLOR_RULES = [
+  [/(notif|alert|urgent|warn)/i,                            '#ef4444'],
+  [/(summar|payment|paid|purchas|transact|price|cost|total)/i, '#10b981'],
+  [/(deliver|status|progress|ship|track|locat|arriv)/i,    '#3b82f6'],
+  [/(activit|recent|histor|change|update|event)/i,         '#8b5cf6'],
+  [/(help|support|faq|educat|learn|info|guide)/i,          '#f59e0b'],
+  [/(prefer|setting|profile|control|manag|person)/i,       '#6b7280'],
+];
+const DEFAULT_COLOR = '#6b7280';
+
+function suggestColor(name) {
+  const n = (name || '').toLowerCase();
+  for (const [re, color] of COLOR_RULES) { if (re.test(n)) return color; }
+  return DEFAULT_COLOR;
+}
+
+function getBlockColor(b) {
+  return b.color || suggestColor(b.name || '');
+}
+
+function hexToRgba(hex, alpha) {
+  if (!hex || hex.length < 7) return `rgba(107,114,128,${alpha})`;
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const bv = parseInt(hex.slice(5,7), 16);
+  return `rgba(${r},${g},${bv},${alpha})`;
+}
+
+function applyColor(id, color) {
+  const card = document.querySelector(`[data-id="${id}"]`);
+  if (!card) return;
+  card.style.borderLeft = `4px solid ${color}`;
+  card.style.background = hexToRgba(color, 0.05);
+  const swatch = card.querySelector('.color-swatch');
+  if (swatch) swatch.style.background = color;
+  const picker = card.querySelector('.color-picker');
+  if (picker) picker.value = color;
+  const tagField = card.querySelector('.block-tag-field');
+  if (tagField) tagField.style.color = color;
+}
+
+// ── Icons ──────────────────────────────────────────────
+const IC = {
+  up:    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`,
+  down:  `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`,
+  trash: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`,
+  plus:  `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  x:     `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+};
+
+// ── Persistence ────────────────────────────────────────
+function load() {
+  try {
+    const raw = localStorage.getItem('cbBuilder_v1');
+    if (!raw) return;
+    const p = JSON.parse(raw);
+    if (p && typeof p === 'object') {
+      state.title  = p.title  || '';
+      state.blocks = Array.isArray(p.blocks) ? p.blocks : [];
+    }
+  } catch(e) {}
+}
+
+function save() {
+  try { localStorage.setItem('cbBuilder_v1', JSON.stringify(state)); } catch(e) {}
+  const el = document.getElementById('saveStatus');
+  el.textContent = 'Saved';
+  el.className = 'save-indicator saved';
+  setTimeout(() => { el.textContent = 'Auto-saved'; el.className = 'save-indicator'; }, 2000);
+}
+
+function scheduleSave() {
+  const el = document.getElementById('saveStatus');
+  el.textContent = 'Saving…'; el.className = 'save-indicator';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 600);
+}
+
+// ── Block operations ───────────────────────────────────
+function addBlock() {
+  state.blocks.push({ id: uid(), name: '', thinking: '', jtbd: '', why: '', elements: [''], color: '', label: '' });
+  renderBlocks();
+  scheduleSave();
+  requestAnimationFrame(() => {
+    const all = document.querySelectorAll('.block-name-field');
+    if (all.length) all[all.length - 1].focus();
+  });
+}
+
+function deleteBlock(id) {
+  state.blocks = state.blocks.filter(b => b.id !== id);
+  renderBlocks(); scheduleSave();
+}
+
+function moveBlock(id, dir) {
+  const i = state.blocks.findIndex(b => b.id === id);
+  if (i < 0) return;
+  const j = i + dir;
+  if (j < 0 || j >= state.blocks.length) return;
+  [state.blocks[i], state.blocks[j]] = [state.blocks[j], state.blocks[i]];
+  renderBlocks(); scheduleSave();
+}
+
+function setField(id, field, val) {
+  const b = state.blocks.find(b => b.id === id);
+  if (!b) return;
+  b[field] = val;
+  if (field === 'name' && !b.color) applyColor(id, suggestColor(val));
+  scheduleSave();
+}
+
+function setColor(id, hex) {
+  const b = state.blocks.find(b => b.id === id);
+  if (!b) return;
+  b.color = hex;
+  applyColor(id, hex);
+  scheduleSave();
+}
+
+function setLabel(id, val) {
+  const b = state.blocks.find(b => b.id === id);
+  if (b) b.label = val;
+  scheduleSave();
+}
+
+function addElement(id) {
+  const b = state.blocks.find(b => b.id === id);
+  if (!b) return;
+  b.elements.push('');
+  renderBlocks(); scheduleSave();
+  requestAnimationFrame(() => {
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (!card) return;
+    const inputs = card.querySelectorAll('.element-input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
+}
+
+function removeElement(id, idx) {
+  const b = state.blocks.find(b => b.id === id);
+  if (!b) return;
+  if (b.elements.length <= 1) {
+    b.elements[0] = '';
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (card) { const inp = card.querySelector('.element-input'); if (inp) inp.value = ''; }
+    scheduleSave(); return;
+  }
+  b.elements.splice(idx, 1);
+  renderBlocks(); scheduleSave();
+}
+
+function setElement(id, idx, val) {
+  const b = state.blocks.find(b => b.id === id);
+  if (b) b.elements[idx] = val;
+  scheduleSave();
+}
+
+// ── Render ─────────────────────────────────────────────
+function esc(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderBlock(b, idx, total) {
+  const isFirst = idx === 0, isLast = idx === total - 1;
+  const color  = getBlockColor(b);
+  const bgTint = hexToRgba(color, 0.05);
+
+  const elems = b.elements.map((e, ei) => `
+    <div class="element-row">
+      <div class="element-dot"></div>
+      <input
+        class="element-input"
+        type="text"
+        value="${esc(e)}"
+        placeholder="e.g. Last 3 notifications with timestamp"
+        data-elem="${esc(b.id)}:${ei}"
+        oninput="setElement('${esc(b.id)}',${ei},this.value)"
+        onkeydown="elemKeydown(event,'${esc(b.id)}',${ei})"
+      />
+      <button class="btn-remove-elem" onclick="removeElement('${esc(b.id)}',${ei})" title="Remove">${IC.x}</button>
+    </div>`).join('');
+
+  return `
+  <div class="block-card" data-id="${esc(b.id)}" style="border-left:4px solid ${color}; background:${bgTint};">
+    <div class="block-card-header">
+      <div class="block-num">${idx + 1}</div>
+      <input
+        class="block-name-field"
+        type="text"
+        value="${esc(b.name)}"
+        placeholder="Block name (e.g. Notifications)"
+        data-field="${esc(b.id)}:name"
+        oninput="setField('${esc(b.id)}','name',this.value)"
+      />
+      <label class="color-swatch" style="background:${color};" title="Choose a color">
+        <input class="color-picker" type="color" value="${color}" oninput="setColor('${esc(b.id)}',this.value)" />
+      </label>
+      <input
+        class="block-tag-field"
+        type="text"
+        value="${esc(b.label || '')}"
+        placeholder="Label"
+        style="color:${color};"
+        data-field="${esc(b.id)}:label"
+        oninput="setLabel('${esc(b.id)}',this.value)"
+      />
+      <div class="block-card-actions">
+        <button class="btn-icon" onclick="moveBlock('${esc(b.id)}',-1)" ${isFirst?'disabled':''} title="Move up">${IC.up}</button>
+        <button class="btn-icon" onclick="moveBlock('${esc(b.id)}',1)"  ${isLast ?'disabled':''} title="Move down">${IC.down}</button>
+        <button class="btn-icon danger" onclick="deleteBlock('${esc(b.id)}')" title="Delete block">${IC.trash}</button>
+      </div>
+    </div>
+    <div class="block-card-body">
+      <div class="field">
+        <div class="field-label">What the user is thinking</div>
+        <textarea
+          class="field-textarea"
+          placeholder="Write in first person — what is going through their mind?"
+          data-field="${esc(b.id)}:thinking"
+          oninput="setField('${esc(b.id)}','thinking',this.value);autoResize(this)"
+        >${esc(b.thinking)}</textarea>
+      </div>
+      <div class="field">
+        <div class="field-label">Job to be done</div>
+        <textarea
+          class="field-textarea"
+          placeholder="e.g. Quickly catch up on what needs my attention"
+          data-field="${esc(b.id)}:jtbd"
+          oninput="setField('${esc(b.id)}','jtbd',this.value);autoResize(this)"
+        >${esc(b.jtbd)}</textarea>
+      </div>
+      <div class="field field-full">
+        <div class="field-label">Why it matters</div>
+        <textarea
+          class="field-textarea"
+          placeholder="e.g. Users miss critical updates when this is not surfaced clearly"
+          data-field="${esc(b.id)}:why"
+          oninput="setField('${esc(b.id)}','why',this.value);autoResize(this)"
+        >${esc(b.why)}</textarea>
+      </div>
+      <div class="field field-full">
+        <div class="field-label">What we show</div>
+        <div class="elements-list">${elems}</div>
+        <button class="btn-add-elem" onclick="addElement('${esc(b.id)}')">${IC.plus} Add content element</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderBlocks() {
+  const list   = document.getElementById('blocksList');
+  const addBtn = document.getElementById('addBlockBtn');
+
+  if (state.blocks.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">▭</div>
+        <h2>No blocks yet</h2>
+        <p>Break your page into blocks, each tied to what the user is trying to do.</p>
+        <button class="btn btn-primary" onclick="addBlock()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add your first block
+        </button>
+      </div>`;
+    addBtn.style.display = 'none';
+    return;
+  }
+
+  addBtn.style.display = '';
+  list.innerHTML = state.blocks.map((b, i) => renderBlock(b, i, state.blocks.length)).join('');
+  list.querySelectorAll('.field-textarea').forEach(autoResize);
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// ── Keyboard helpers ───────────────────────────────────
+function elemKeydown(e, id, idx) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const b = state.blocks.find(b => b.id === id);
+  if (!b) return;
+  b.elements.splice(idx + 1, 0, '');
+  renderBlocks(); scheduleSave();
+  requestAnimationFrame(() => {
+    const input = document.querySelector(`[data-elem="${id}:${idx + 1}"]`);
+    if (input) input.focus();
+  });
+}
+
+// ── Modals ─────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function handleOverlay(e, id) {
+  if (e.target === document.getElementById(id)) closeModal(id);
+}
+
+function openEmailModal() {
+  closeModal('exportModal');
+  document.getElementById('emailSubject').value =
+    state.title ? `Page plan: ${state.title}` : 'Page plan: Content blocks';
+  openModal('emailModal');
+}
+
+// ── Export: PDF ────────────────────────────────────────
+function exportPDF() {
+  closeModal('exportModal');
+  window.print();
+}
+
+// ── Export: Email ──────────────────────────────────────
+function sendEmail() {
+  const to      = document.getElementById('emailTo').value.trim();
+  const subject = document.getElementById('emailSubject').value.trim() || 'Page plan: Content blocks';
+
+  const lines = [];
+  if (state.title) { lines.push(state.title.toUpperCase(), '='.repeat(Math.min(state.title.length, 40)), ''); }
+  lines.push('CONTENT BLOCK PLAN', '');
+
+  state.blocks.forEach((b, i) => {
+    const tag = b.label ? ` [${b.label}]` : '';
+    lines.push(`BLOCK ${i + 1}: ${b.name || '(Unnamed)'}${tag}`, '-'.repeat(32), '');
+    if (b.thinking) { lines.push('WHAT THE USER IS THINKING', `"${b.thinking}"`, ''); }
+    if (b.jtbd)     { lines.push('JOB TO BE DONE', b.jtbd, ''); }
+    if (b.why)      { lines.push('WHY IT MATTERS', b.why, ''); }
+    const els = b.elements.filter(e => e.trim());
+    if (els.length) { lines.push('WHAT WE SHOW', ...els.map(e => `  • ${e}`), ''); }
+    lines.push('');
+  });
+
+  window.location.href =
+    `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
+  closeModal('emailModal');
+}
+
+// ── Global keyboard shortcuts ──────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal('exportModal'); closeModal('emailModal'); }
+  if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'b') {
+    e.preventDefault(); addBlock();
+  }
+});
+
+// ── Init ───────────────────────────────────────────────
+load();
+document.getElementById('pageTitle').value = state.title;
+renderBlocks();
+</script>
+</body>
+</html>
