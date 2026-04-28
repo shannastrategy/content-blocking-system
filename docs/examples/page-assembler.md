@@ -1,15 +1,5 @@
 # Build a page
 
-This is where everything comes together.
-
-Add a block, fill in what the user needs, and watch the page take shape.
-
-No guesswork. Just build it step by step.
-
----
-
-## Try this first
-
-Click "Load example" to see how it works, or start from scratch.
+<p class="page-subline">Add blocks one at a time. Each one captures what the user needs and why it matters — before any component gets picked.</p>
 
 <BlockBuilder />

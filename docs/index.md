@@ -1,83 +1,54 @@
-# Build better pages, faster
-
-Stop guessing what belongs on a page.
-
-Start with what the user needs, break it into clear blocks, and build from there.
-
-<div class="home-cta">
-  <a class="cta-primary" href="/examples/page-assembler">Build a page</a>
-  <a class="cta-secondary" href="/examples/order-overview-content-block">See the blocks</a>
-</div>
-
----
-
-## Start here
-
-If you're new, start here:
-
-👉 <a href="/examples/page-assembler"><strong>Start building a page</strong></a>
-
-You'll create blocks, fill in the thinking behind them, and see how they turn into a real experience.
-
----
-
-## How this works
-
-<div class="flow-row">
-  <div class="flow-step">
-    <div class="flow-number">1</div>
-    <h3>Start with the question</h3>
-    <p>What is the user trying to understand or do?</p>
-  </div>
-
-  <div class="flow-arrow">→</div>
-
-  <div class="flow-step">
-    <div class="flow-number">2</div>
-    <h3>Turn it into a block</h3>
-    <p>Define the intent, action, and why it matters.</p>
-  </div>
-
-  <div class="flow-arrow">→</div>
-
-  <div class="flow-step">
-    <div class="flow-number">3</div>
-    <h3>Build the page</h3>
-    <p>Stack the blocks to create the full experience.</p>
+<div class="home-hero">
+  <h1 class="hero-headline">Decide what a page should do — before design begins</h1>
+  <p class="hero-sub">This helps teams get clear on what users need, what to say first, and how to structure the experience — all before a single component gets picked.</p>
+  <div class="hero-actions">
+    <a class="btn-hero-primary" href="/examples/page-assembler">Start building</a>
+    <a class="btn-hero-secondary" href="/examples/haven-order-overview">See the blocks</a>
+    <a class="btn-hero-ghost" href="/framework">Read the framework</a>
   </div>
 </div>
 
----
+<hr class="home-divider" />
 
-## Why this helps
-
-- You know what belongs on the page  
-- You stop over-designing  
-- You move faster with design and product  
-- You can reuse the same thinking everywhere  
-
----
-
-## Where to start
-
-<div class="start-section">
-
-  <div class="start-item">
-    <h3>Content blocks</h3>
-    <p>See how each part of the page is defined.</p>
-    <a class="start-cta" href="/examples/order-overview-content-block">See the blocks</a>
+<div class="idea-section">
+  <h2>The idea</h2>
+  <p class="idea-lead">Before you write a single word or pick a single component, answer three questions:</p>
+  <div class="idea-trio">
+    <div class="idea-item">
+      <div class="idea-num-lg" aria-hidden="true">1</div>
+      <p>What is the user trying to figure out?</p>
+    </div>
+    <div class="idea-item">
+      <div class="idea-num-lg" aria-hidden="true">2</div>
+      <p>What does the content need to do about it?</p>
+    </div>
+    <div class="idea-item">
+      <div class="idea-num-lg" aria-hidden="true">3</div>
+      <p>What should they see first?</p>
+    </div>
   </div>
+  <p class="idea-close">That's content blocking. A simple shift — from starting with layout to starting with meaning.</p>
+</div>
 
-  <div class="start-item">
-    <h3>Breakdown</h3>
-    <p>See how the full page comes together.</p>
-    <a class="start-cta" href="/examples/order-overview-breakdown">See how it fits together</a>
+<hr class="home-divider" />
+
+<div class="bva-section">
+  <h2 class="bva-heading">Before vs after</h2>
+  <div class="bva-cols">
+    <div class="bva-col bva-before">
+      <div class="bva-label">Before</div>
+      <ul class="bva-list">
+        <li>"Let's add a chart, a banner, and a CTA"</li>
+        <li>"Content gets figured out after the design is already done"</li>
+      </ul>
+    </div>
+    <div class="bva-col bva-after">
+      <div class="bva-label">After</div>
+      <ul class="bva-list">
+        <li>"What is the user trying to figure out?"</li>
+        <li>"What do they need to hear first?"</li>
+        <li>"OK, now what components support that?"</li>
+      </ul>
+    </div>
   </div>
-
-  <div class="start-item">
-    <h3>Build a page</h3>
-    <p>Try it yourself and watch the page take shape.</p>
-    <a class="start-cta primary" href="/examples/page-assembler">Start building a page</a>
-  </div>
-
 </div>
